@@ -160,6 +160,11 @@ public:
 	uint8_t readStatus();
 
 	/**
+	 * @brief Reads the configuration register
+	 */
+	uint8_t readConfiguration();
+
+	/**
 	 * @brief Checks the status register and returns true if a write is in progress
 	 */
 	bool isWriteInProgress();

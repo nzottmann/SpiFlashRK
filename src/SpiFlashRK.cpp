@@ -80,6 +80,18 @@ uint8_t SpiFlash::readStatus() {
 	return rxBuf[1];
 }
 
+uint8_t SpiFlash::readConfiguration() {
+	uint8_t txBuf[2], rxBuf[2];
+	txBuf[0] = 0x15; // RDCR
+	txBuf[1] = 0;
+
+	beginTransaction();
+	spi.transfer(txBuf, rxBuf, sizeof(txBuf), NULL);
+	endTransaction();
+
+	return rxBuf[1];
+}
+
 bool SpiFlash::isWriteInProgress() {
 	return (readStatus() & STATUS_WIP) != 0;
 }
