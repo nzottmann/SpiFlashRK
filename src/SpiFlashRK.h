@@ -273,6 +273,15 @@ public:
 	 */
 	inline SpiFlash &withSharedBus(unsigned long delayus) { sharedBus = true; sharedBusDelay = delayus; return *this;};
 
+	/**
+	 * @brief Sets 4-byte address mode
+	 *
+	 * Standard 3-byte address mode can only address up to 16*1024*1024 bytes. This activates the 4-byte address mode
+	 * as used for example by the MX25L51245GMI-08G 64MByte flash. It uses the 4-byte Address Command Set, which does
+	 * not need the EN4B command before. See Datasheet MX25L51245G, p.15 for details.
+	 */
+	inline SpiFlash &withAddressMode4B() { addressMode4B = true; return *this;};
+
 protected:
 	// Flags for the status register
 	static const uint8_t STATUS_WIP 	= 0x01;
@@ -369,6 +378,7 @@ private:
 	SPIClass &spi;
 	int cs;
 	bool sharedBus = false;
+	bool addressMode4B = false;
 
 	unsigned long sharedBusDelay = 200; // microseconds
 };

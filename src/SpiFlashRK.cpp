@@ -139,12 +139,12 @@ void SpiFlash::readData(size_t addr, void *buf, size_t bufLen) {
 			count = bufLen;
 		}
 
-		uint8_t txBuf[4];
+		uint8_t txBuf[5];
 
-		setInstWithAddr(0x03, addr, txBuf); // READ
+		setInstWithAddr(addressMode4B ? 0x13 : 0x03, addr, txBuf); // READ 4B
 
 		beginTransaction();
-		spi.transfer(txBuf, NULL, sizeof(txBuf), NULL);
+		spi.transfer(txBuf, NULL, addressMode4B ? sizeof(txBuf) : sizeof(txBuf)-1, NULL);
 		spi.transfer(NULL, curBuf, bufLen, NULL);
 		endTransaction();
 
@@ -157,9 +157,17 @@ void SpiFlash::readData(size_t addr, void *buf, size_t bufLen) {
 
 void SpiFlash::setInstWithAddr(uint8_t inst, size_t addr, uint8_t *buf) {
 	buf[0] = inst;
-	buf[1] = (uint8_t) (addr >> 16);
-	buf[2] = (uint8_t) (addr >> 8);
-	buf[3] = (uint8_t) addr;
+	if(addressMode4B) {
+		buf[1] = (uint8_t) (addr >> 24);
+		buf[2] = (uint8_t) (addr >> 16);
+		buf[3] = (uint8_t) (addr >> 8);
+		buf[4] = (uint8_t) addr;
+	}
+	else {
+		buf[1] = (uint8_t) (addr >> 16);
+		buf[2] = (uint8_t) (addr >> 8);
+		buf[3] = (uint8_t) addr;
+	}
 }
 
 
@@ -179,14 +187,14 @@ void SpiFlash::writeData(size_t addr, const void *buf, size_t bufLen) {
 
 		// Log.info("writeData addr=%lx pageOffset=%lu pageStart=%lu count=%lu pageSize=%lu", addr, pageOffset, pageStart, count, pageSize);
 
-		uint8_t txBuf[4];
+		uint8_t txBuf[5];
 
-		setInstWithAddr(0x02, addr, txBuf); // PAGE_PROG
+		setInstWithAddr(addressMode4B ? 0x12 : 0x02, addr, txBuf); // PAGE_PROG 4B
 
 		writeEnable();
 
 		beginTransaction();
-		spi.transfer(txBuf, NULL, sizeof(txBuf), NULL);
+		spi.transfer(txBuf, NULL, addressMode4B ? sizeof(txBuf) : sizeof(txBuf)-1, NULL);
 		spi.transfer(curBuf, NULL, count, NULL);
 		endTransaction();
 
@@ -203,20 +211,20 @@ void SpiFlash::writeData(size_t addr, const void *buf, size_t bufLen) {
 void SpiFlash::sectorErase(size_t addr) {
 	waitForWriteComplete();
 
-	uint8_t txBuf[4];
+	uint8_t txBuf[5];
 
 	// Log.trace("sectorEraseCmd=%02x", sectorEraseCmd);
 
 	//
 	// ISSI 25LQ080 uses 0x20 or 0xD7
 	// Winbond uses 0x20 only, so use that
-	setInstWithAddr(0x20, addr, txBuf); // SECTOR_ER
+	setInstWithAddr(addressMode4B ? 0x21 : 0x20, addr, txBuf); // SECTOR_ER 4B
 
 
 	writeEnable();
 
 	beginTransaction();
-	spi.transfer(txBuf, NULL, sizeof(txBuf), NULL);
+	spi.transfer(txBuf, NULL, addressMode4B ? sizeof(txBuf) : sizeof(txBuf)-1, NULL);
 	endTransaction();
 
 	waitForWriteComplete(sectorEraseTimeoutMs);
@@ -225,14 +233,14 @@ void SpiFlash::sectorErase(size_t addr) {
 void SpiFlash::blockErase(size_t addr) {
 	waitForWriteComplete();
 
-	uint8_t txBuf[4];
+	uint8_t txBuf[5];
 
-	setInstWithAddr(0xD8, addr, txBuf); // BLOCK_ER
+	setInstWithAddr(addressMode4B ? 0xDC : 0xD8, addr, txBuf); // BLOCK_ER 4B
 
 	writeEnable();
 
 	beginTransaction();
-	spi.transfer(txBuf, NULL, sizeof(txBuf), NULL);
+	spi.transfer(txBuf, NULL, addressMode4B ? sizeof(txBuf) : sizeof(txBuf)-1, NULL);
 	endTransaction();
 
 	waitForWriteComplete(chipEraseTimeoutMs);
